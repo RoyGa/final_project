@@ -6,6 +6,7 @@ import requests
 import matplotlib.pyplot as plt
 import json
 import numpy as np
+import constants
 
 features = ["time_obs", "tmp_air_dry", "tmp_air_wet", "tmp_dew_pnt",
             "prs_lvl_hgt", "prs_sea_lvl", "wind_dir", "wind_spd"]
@@ -66,7 +67,7 @@ def extract_weather_data(filename):
     for i in range(0, len(data), 8):
         currData = data[i:i+8]
         records.append(calc_DailySummary(currData))
-    print(records[0])
+    # print(records[0])
     return records
 
 def derive_goal_temperature_N_days_ahead(df, N):
@@ -74,7 +75,6 @@ def derive_goal_temperature_N_days_ahead(df, N):
     day_N_temperatures = [df['meantempm'][i+N] for i in range(0, rows-N)] + [None]*N
     col_name = col_name = 'day_{}_meantempm'.format(N)
     df[col_name] = day_N_temperatures
-
 
 def derive_nth_day_feature(df, feature, N):
     rows = df.shape[0]
@@ -94,14 +94,17 @@ def get_df():
             for N in range(1, 4):
                 derive_nth_day_feature(df, feature, N)
     
+    derive_goal_temperature_N_days_ahead(df, constants.N_DAY)
+    
     # Make list of original features without meantempm, mintempm and maxtempm
-    features_to_remove = [feature for feature in renamedFeatures if feature not in ['meantempm', 'mintempm', 'maxtempm']]
+    # features_to_remove = [feature for feature in renamedFeatures if feature not in ['meantempm', 'mintempm', 'maxtempm']]
+    features_to_remove = [feature for feature in renamedFeatures if feature not in []]
 
-    # Make a list of columns to keep
-    columns_to_keep = [col for col in df.columns if col not in features_to_remove]
+    # # Make a list of columns to keep
+    # columns_to_keep = [col for col in df.columns if col not in features_to_remove]
 
-    # Select only the columns in columns_to_keep and assign to df
-    df = df[columns_to_keep]
+    # # Select only the columns in columns_to_keep and assign to df
+    # df = df[columns_to_keep]
     # print(df.columns)
 
     # print(df.info())
@@ -117,7 +120,7 @@ def get_df():
     spread['outliers'] = (spread['min']<(spread['25%']-(3*IQR)))|(spread['max'] > (spread['75%']+3*IQR))
 
     # Display the features containing extreme outliers
-    print(spread.loc[spread.outliers,])
+    # print(spread.loc[spread.outliers,])
 
     # plt.rcParams['figure.figsize'] = [14, 8]
     # df.maxhumidity_1.hist()
@@ -133,63 +136,3 @@ def get_df():
     # Drop records containing NaN values
     df = df.dropna()
     return df
-
-
-
-# Getting the records from the json data file
-# records = extract_weather_data('data.json')
-
-# Setting up Pandas DataFrame
-# df = pd.DataFrame(records, columns=renamedFeatures).set_index('date')
-
-# def derive_nth_day_feature(df, feature, N):
-#     rows = df.shape[0]
-#     nth_prior_measurements = [None]*N + [df[feature][i-N] for i in range(N, rows)]
-#     col_name = "{}_{}".format(feature, N)
-#     df[col_name] = nth_prior_measurements
-
-# for feature in renamedFeatures:
-#     if feature != 'date':
-#         for N in range(1, 4):
-#             derive_nth_day_feature(df, feature, N)
-
-# Data cleaning
-#
-# make list of original features without meantempm, mintempm and maxtempm
-# features_to_remove = [feature for feature in renamedFeatures if feature not in ['meantempm', 'mintempm', 'maxtempm']]
-
-# # make a list of columns to keep
-# columns_to_keep = [col for col in df.columns if col not in features_to_remove]
-
-# # select only the columns in columns_to_keep and assign to df
-# df = df[columns_to_keep]
-# print(df.columns)
-
-# print(df.info())
-
-# # Call describe on df and transpose it due to the large number of columns
-# spread = df.describe().T
-
-# # precalculate interquartile range for ease of use in next calculation
-# IQR = spread['75%'] - spread['25%']
-
-# # create an outliers column which is either 3 IQRs below the first quartile or
-# # 3 IQRs above the third quartile
-# spread['outliers'] = (spread['min']<(spread['25%']-(3*IQR)))|(spread['max'] > (spread['75%']+3*IQR))
-
-# # just display the features containing extreme outliers
-# print(spread.loc[spread.outliers,])
-
-# # plt.rcParams['figure.figsize'] = [14, 8]
-# # df.maxhumidity_1.hist()
-# # plt.title('Distribution of maxhumidity_1')
-# # plt.xlabel('maxhumidity_1')
-# # plt.show()
-
-# # df.minpressurem_1.hist()
-# # plt.title('Distribution of minpressurem_1')
-# # plt.xlabel('minpressurem_1')
-# # plt.show()
-
-# # Drop records containing NaN values
-# df = df.dropna()
