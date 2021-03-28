@@ -26,14 +26,14 @@ day_N_meantempm_string = 'day_{}_meantempm'.format(constants.N_DAY)
 
 # Remove the features that have correlation values less than the absolute value of 0.6
 # We do this by creating a new DataFrame that only contains the variables of interest
-predictors = ['meantempm', 'mintempm', 'meandewptm','maxdewptm', 'mindewptm', 'maxtempm',
+predictors = ['meantempm', 'mintempm', 'meandewptm', 'maxdewptm', 'mindewptm', 'maxtempm',
     'meantempm_1',  'meantempm_2',  'meantempm_3', 
     'mintempm_1',   'mintempm_2',   'mintempm_3',
     'meandewptm_1', 'meandewptm_2', 'meandewptm_3',
     'maxdewptm_1',  'maxdewptm_2',  'maxdewptm_3',
     'mindewptm_1',  'mindewptm_2',  'mindewptm_3',
     'maxtempm_1',   'maxtempm_2',   'maxtempm_3']
-print("\n legnth = {}\n".format(len(predictors)))
+# print("\n legnth = {}\n".format(len(predictors)))
 df2 = df[[day_N_meantempm_string] + predictors]
 
 # Visualizing the Relationships:
@@ -58,11 +58,11 @@ for row, col_arr in enumerate(arr):
             axes[row, col].set(xlabel=feature, ylabel=day_N_meantempm_string)
         else:
             axes[row, col].set(xlabel=feature)
-plt.show()
+# plt.show()
 
 
 
-# Backward elimination: (currently not in use)
+# Backward elimination:
 
 # separate the predictor variables (Xs) from the outcome variable (y)
 X = df2[predictors]
@@ -70,19 +70,39 @@ y = df2['day_{}_meantempm'.format(constants.N_DAY)]
 
 # add a constant to the predictor variable set to represent the Bo intercept
 X = sm.add_constant(X)
-print(X)
 
-# (1) select a significance level
-p_value = 0.05
+def get_key(pvalues, val):
+	for key, value in pvalues.items():
+		if val == value:
+			return key
 
-# (2) Fit the model
-model = sm.OLS(y, X).fit()
+	return "key doesn't exist"
 
-# (3) identify the feature (predictor) which has the highest P-value
-print(model.summary())
+def backward_elimination(X, y, p_value=0.05):
+    removed_predictor = {}
+    
+    # (1) select a significance level (default: 0.05)
+    
+    while True:
+        # (2) Fit the model
+        model = sm.OLS(y, X).fit()
 
-# ... (4) ...(5)
+        # (3) identify the feature (predictor) which has the highest P-value
+        max_pvalue_predictor = max(model.pvalues)
+        max_pvalue_predictor_key = get_key(model.pvalues, max_pvalue_predictor)
 
+        # (4) if the max pvalue found is greater than the significance level - remove predictor
+        if max_pvalue_predictor > p_value:
+            X = X.drop(max_pvalue_predictor_key, axis=1)
+            removed_predictor[max_pvalue_predictor_key] = max_pvalue_predictor
+            # temp.append(max_pvalue_predictor_key)
+        else:
+            break
+    print("\nPredicators removed by backward elimination:\n", removed_predictor)
+    print(model.summary())
+
+
+backward_elimination(X, y)
 
 # Linear Regression:
 
@@ -104,4 +124,3 @@ prediction = regressor.predict(X_test)
 print("The Explained Variance: %.2f" % regressor.score(X_test, y_test))
 print("The Mean Absolute Error: %.2f°C" % mean_absolute_error(y_test, prediction))
 print("The Median Absolute Error: %.2f°C" % median_absolute_error(y_test, prediction))
-

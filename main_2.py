@@ -23,23 +23,14 @@ def sum_field(field, data):
         if d[field] != -9999:
             total += d[field]
             count += 1
-        # total += d[field] if d[field] != -9999 else 0
-        # total += d[field]
     return total, count
-    # return total
 
 def calc_mean(field, data):
     total, count = sum_field(field, data)
     return total/count if count!=0 else 0
-    # if count != 0:
-    #     return total/count
-    # else:
-    #     return 0
-    # return sum_field(field, data)/8
 
 def calc_max(field, data):
     return max(x[field] if x[field]!=-9999 else 0 for x in data)
-    # return max(x[field] for x in data)
 
 def calc_min(field, data):
     return min(x[field] if x[field]!=-9999 else 0 for x in data)
@@ -67,7 +58,6 @@ def extract_weather_data(filename):
     for i in range(0, len(data), 8):
         currData = data[i:i+8]
         records.append(calc_DailySummary(currData))
-    # print(records[0])
     return records
 
 def derive_goal_temperature_N_days_ahead(df, N):
